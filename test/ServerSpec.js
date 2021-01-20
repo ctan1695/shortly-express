@@ -5,7 +5,7 @@ var httpMocks = require('node-mocks-http');
 
 var app = require('../server/app.js');
 var schema = require('../server/db/config.js');
-var port = 4568;
+var port = 5500;
 
 /************************************************************/
 // Mocha doesn't have a way to designate pending before blocks.
@@ -33,16 +33,22 @@ describe('', function() {
     });
   };
 
+  db = mysql.createConnection({
+    user: 'root',
+    password: '',
+    database: 'shortly'
+  });
   beforeEach(function(done) {
+
+    db = mysql.createConnection({
+      user: 'root',
+      password: '',
+      database: 'shortly'
+    });
 
     /*************************************************************************************/
     /* TODO: Update user and password if different than on your local machine            */
     /*************************************************************************************/
-    db = mysql.createConnection({
-      user: 'student',
-      password: 'student',
-      database: 'shortly'
-    });
 
     /**************************************************************************************/
     /* TODO: If you create a new MySQL tables, add it to the tablenames collection below. */
@@ -62,11 +68,11 @@ describe('', function() {
   });
 
   describe('Database Schema:', function() {
+
     it('contains a users table', function(done) {
       var queryString = 'SELECT * FROM users';
       db.query(queryString, function(err, results) {
         if (err) { return done(err); }
-
         expect(results).to.deep.equal([]);
         done();
       });
@@ -123,22 +129,25 @@ describe('', function() {
     });
   });
 
-  xdescribe('Account Creation:', function() {
+  describe('Account Creation:', function() {
 
     it('signup creates a new user record', function(done) {
       var options = {
-        'method': 'POST',
-        'uri': 'http://127.0.0.1:4568/signup',
-        'json': {
-          'username': 'Samantha',
-          'password': 'Samantha'
+        method: 'POST',
+        uri: 'http://127.0.0.1:5500/signup', //4568
+        json: {
+          username: 'Samantha',
+          password: 'Samantha'
         }
       };
 
-      request(options, function(error, res, body) {
+      request(options, function() {
+
         var queryString = 'SELECT * FROM users where username = "Samantha"';
         db.query(queryString, function(err, rows) {
-          if (err) { done(err); }
+          if (err) { console.log('err:', err); done(err); }
+          console.log('rows: ', rows);
+
           var user = rows[0];
           expect(user).to.exist;
           expect(user.username).to.equal('Samantha');
@@ -610,7 +619,7 @@ describe('', function() {
       }
     };
 
-    xbeforeEach(function(done) {
+    beforeEach(function(done) {
       var options = {
         'method': 'POST',
         'followAllRedirects': true,
