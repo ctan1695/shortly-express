@@ -141,8 +141,9 @@ describe('', function() {
         }
       };
 
-      request(options, function() {
-
+      request(options, function(error, res, body) {
+        console.log('body: ', body);
+        console.log('res.body: ', res.body);
         var queryString = 'SELECT * FROM users where username = "Samantha"';
         db.query(queryString, function(err, rows) {
           if (err) { console.log('err:', err); done(err); }
@@ -159,7 +160,7 @@ describe('', function() {
     it('does not store the user\'s original text password', function(done) {
       var options = {
         'method': 'POST',
-        'uri': 'http://127.0.0.1:4568/signup',
+        'uri': 'http://127.0.0.1:5500/signup',
         'json': {
           'username': 'Samantha',
           'password': 'Samantha'
@@ -182,7 +183,7 @@ describe('', function() {
     it('redirects to signup if the user already exists', function(done) {
       var options = {
         'method': 'POST',
-        'uri': 'http://127.0.0.1:4568/signup',
+        'uri': 'http://127.0.0.1:5500/signup',
         'json': {
           'username': 'Samantha',
           'password': 'Samantha'
@@ -202,7 +203,7 @@ describe('', function() {
     it('redirects to index after user is created', function(done) {
       var options = {
         'method': 'POST',
-        'uri': 'http://127.0.0.1:4568/signup',
+        'uri': 'http://127.0.0.1:5500/signup',
         'json': {
           'username': 'Samantha',
           'password': 'Samantha'
@@ -222,7 +223,7 @@ describe('', function() {
     beforeEach(function(done) {
       var options = {
         'method': 'POST',
-        'uri': 'http://127.0.0.1:4568/signup',
+        'uri': 'http://127.0.0.1:5500/signup',
         'json': {
           'username': 'Samantha',
           'password': 'Samantha'
@@ -237,7 +238,7 @@ describe('', function() {
     it('Logs in existing users', function(done) {
       var options = {
         'method': 'POST',
-        'uri': 'http://127.0.0.1:4568/login',
+        'uri': 'http://127.0.0.1:5500/login',
         'json': {
           'username': 'Samantha',
           'password': 'Samantha'
@@ -254,7 +255,7 @@ describe('', function() {
     it('Users that do not exist are kept on login page', function(done) {
       var options = {
         'method': 'POST',
-        'uri': 'http://127.0.0.1:4568/login',
+        'uri': 'http://127.0.0.1:5500/login',
         'json': {
           'username': 'Fred',
           'password': 'Fred'
@@ -271,7 +272,7 @@ describe('', function() {
     it('Users that enter an incorrect password are kept on login page', function(done) {
       var options = {
         'method': 'POST',
-        'uri': 'http://127.0.0.1:4568/login',
+        'uri': 'http://127.0.0.1:5500/login',
         'json': {
           'username': 'Samantha',
           'password': 'Alexander'

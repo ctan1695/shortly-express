@@ -78,12 +78,13 @@ app.post('/links',
 // Write your authentication routes here
 /************************************************************/
 
+
 app.post('/login', (req, res, next) => {
   var url = req.body.url;
-  // var username = req.body.username;
+  var username = req.body.username;
   var password = req.body.password;
   console.log('url: ', url);
-  return models.Users.get({ username: req.body.username })
+  return models.Users.get({ username: username })
     .then(data => {
       if (data) {
         if (models.Users.compare(password, data.password, data.salt)) {
@@ -98,26 +99,33 @@ app.post('/login', (req, res, next) => {
         console.log('Account information not found!');
         //redirect to signup//unsuccessful login
       }
+    })
+    .error(error => {
+      res.status(500).send(error);
+    })
+    .catch(data => {
+      res.redirect('/login');
+      res.end();
     });
 });
 
 app.post('/signup', (req, res, next) => {
-  var url = req.body.url;
   var username = req.body.username;
   var password = req.body.password;
-  return models.Users.get({ username })
+  return models.Users.get({ username: username, password: password })
     .then(data => {
       if (data) {
         console.log('User already exists! Go to Login page.');
-        // return res.redirect('/login');
+        return res.redirect('/signup');
       } else {
         console.log('data: ', data);
         return models.Users.create({ username, password });
-        res.send();
+        res.status(201).redirect('/');
       }
     })
     .then(results => {
-      // res.status(201).redirect('/login');
+      res.redirect('/');
+      next();
     })
     // start a session for the user
     // res.end();
@@ -129,6 +137,7 @@ app.post('/signup', (req, res, next) => {
     })
     .catch(data => {
       res.redirect('/signup');
+      res.end();
     });
 
 });
