@@ -386,6 +386,7 @@ describe('', function() {
         var response = httpMocks.createResponse();
 
         createSession(requestWithoutCookies, response, function() {
+          var session = requestWithoutCookies.session;
           console.log('session: ', session);
           expect(session).to.exist;
           expect(session).to.be.an('object');
@@ -402,6 +403,7 @@ describe('', function() {
           var cookies = response.cookies;
           expect(cookies['shortlyid']).to.exist;
           expect(cookies['shortlyid'].value).to.exist;
+          console.log('done');
           done();
         });
       });
@@ -418,6 +420,7 @@ describe('', function() {
           requestWithCookies.cookies.shortlyid = cookie;
 
           createSession(requestWithCookies, secondResponse, function() {
+            console.log('done');
             var session = requestWithCookies.session;
             expect(session).to.be.an('object');
             expect(session.hash).to.exist;
@@ -489,7 +492,7 @@ describe('', function() {
     });
   });
 
-  xdescribe('Sessions and cookies', function() {
+  describe('Sessions and cookies', function() {
     var requestWithSession;
     var cookieJar;
 
@@ -497,7 +500,7 @@ describe('', function() {
 
       var options = {
         'method': 'POST',
-        'uri': 'http://127.0.0.1:4568/signup',
+        'uri': 'http://127.0.0.1:5500/signup',
         'json': {
           'username': 'Vivian',
           'password': 'Vivian'
@@ -514,7 +517,7 @@ describe('', function() {
     });
 
     it('saves a new session when the server receives a request', function(done) {
-      requestWithSession('http://127.0.0.1:4568/', function(err, res, body) {
+      requestWithSession('http://127.0.0.1:5500/', function(err, res, body) {
         if (err) { return done(err); }
         var queryString = 'SELECT * FROM sessions';
         db.query(queryString, function(error, sessions) {
@@ -527,9 +530,9 @@ describe('', function() {
     });
 
     it('sets and stores a cookie on the client', function(done) {
-      requestWithSession('http://127.0.0.1:4568/', function(error, res, body) {
+      requestWithSession('http://127.0.0.1:5500/', function(error, res, body) {
         if (error) { return done(error); }
-        var cookies = cookieJar.getCookies('http://127.0.0.1:4568/');
+        var cookies = cookieJar.getCookies('http://127.0.0.1:5500/');
         expect(cookies.length).to.equal(1);
         done();
       });
@@ -538,7 +541,7 @@ describe('', function() {
     it('assigns session to a user when user logs in', function(done) {
       addUser(function(err, res, body) {
         if (err) { return done(err); }
-        var cookies = cookieJar.getCookies('http://127.0.0.1:4568/');
+        var cookies = cookieJar.getCookies('http://127.0.0.1:5500/');
         var cookieValue = cookies[0].value;
 
         var queryString = `
@@ -558,13 +561,13 @@ describe('', function() {
     it('destroys session and cookie when logs out', function(done) {
       addUser(function(err, res, body) {
         if (err) { return done(err); }
-        var cookies = cookieJar.getCookies('http://127.0.0.1:4568/');
+        var cookies = cookieJar.getCookies('http://127.0.0.1:5500/');
         var cookieValue = cookies[0].value;
 
-        requestWithSession('http://127.0.0.1:4568/logout', function(error, response, resBody) {
+        requestWithSession('http://127.0.0.1:5500/logout', function(error, response, resBody) {
           if (error) { return done(error); }
 
-          var cookies = cookieJar.getCookies('http://127.0.0.1:4568/');
+          var cookies = cookieJar.getCookies('http://127.0.0.1:5500/');
           var newCookieValue = cookies[0].value;
           expect(cookieValue).to.not.equal(newCookieValue);
 
@@ -582,7 +585,7 @@ describe('', function() {
   xdescribe('Privileged Access:', function() {
 
     it('Redirects to login page if a user tries to access the main page and is not signed in', function(done) {
-      request('http://127.0.0.1:4568/', function(error, res, body) {
+      request('http://127.0.0.1:5500/', function(error, res, body) {
         if (error) { return done(error); }
         expect(res.req.path).to.equal('/login');
         done();
@@ -590,7 +593,7 @@ describe('', function() {
     });
 
     it('Redirects to login page if a user tries to access the create page and is not signed in', function(done) {
-      request('http://127.0.0.1:4568/create', function(error, res, body) {
+      request('http://127.0.0.1:5500/create', function(error, res, body) {
         if (error) { return done(error); }
         expect(res.req.path).to.equal('/login');
         done();
@@ -598,7 +601,7 @@ describe('', function() {
     });
 
     it('Redirects to login page if a user tries to see all of the links and is not signed in', function(done) {
-      request('http://127.0.0.1:4568/links', function(error, res, body) {
+      request('http://127.0.0.1:5500/links', function(error, res, body) {
         if (error) { return done(error); }
         expect(res.req.path).to.equal('/login');
         done();
@@ -613,7 +616,7 @@ describe('', function() {
     var options = {
       'method': 'POST',
       'followAllRedirects': true,
-      'uri': 'http://127.0.0.1:4568/links',
+      'uri': 'http://127.0.0.1:5500/links',
       'json': {
         'url': 'http://www.google.com/'
       }
@@ -623,7 +626,7 @@ describe('', function() {
       var options = {
         'method': 'POST',
         'followAllRedirects': true,
-        'uri': 'http://127.0.0.1:4568/signup',
+        'uri': 'http://127.0.0.1:5500/signup',
         'json': {
           'username': 'Vivian',
           'password': 'Vivian'
@@ -633,7 +636,7 @@ describe('', function() {
     });
 
     afterEach(function(done) {
-      requestWithSession('http://127.0.0.1:4568/logout', done);
+      requestWithSession('http://127.0.0.1:5500/logout', done);
     });
 
     describe('Creating new links:', function(done) {
@@ -641,7 +644,7 @@ describe('', function() {
       it('Only shortens valid urls, returning a 404 - Not found for invalid urls', function(done) {
         var options = {
           'method': 'POST',
-          'uri': 'http://127.0.0.1:4568/links',
+          'uri': 'http://127.0.0.1:5500/links',
           'json': {
             'url': 'definitely not a valid url'
           }
@@ -704,7 +707,7 @@ describe('', function() {
         link = {
           url: 'http://www.google.com/',
           title: 'Google',
-          baseUrl: 'http://127.0.0.1:4568',
+          baseUrl: 'http://127.0.0.1:5500',
           code: '2387f'
         };
         db.query('INSERT INTO links SET ?', link, done);
@@ -714,7 +717,7 @@ describe('', function() {
         var options = {
           'method': 'POST',
           'followAllRedirects': true,
-          'uri': 'http://127.0.0.1:4568/links',
+          'uri': 'http://127.0.0.1:5500/links',
           'json': {
             'url': 'http://www.google.com/'
           }
@@ -731,7 +734,7 @@ describe('', function() {
       it('Shortcode redirects to correct url', function(done) {
         var options = {
           'method': 'GET',
-          'uri': 'http://127.0.0.1:4568/' + link.code
+          'uri': 'http://127.0.0.1:5500/' + link.code
         };
 
         requestWithSession(options, function(error, res, body) {
@@ -751,7 +754,7 @@ describe('', function() {
         requestWithSession(options, function(error, res, body) {
           if (error) { return done(error); }
           var currentLocation = res.request.href;
-          expect(currentLocation).to.equal('http://127.0.0.1:4568/');
+          expect(currentLocation).to.equal('http://127.0.0.1:5500/');
           done();
         });
       });
@@ -759,7 +762,7 @@ describe('', function() {
       it('Returns all of the links to display on the links page', function(done) {
         var options = {
           'method': 'GET',
-          'uri': 'http://127.0.0.1:4568/links'
+          'uri': 'http://127.0.0.1:5500/links'
         };
 
         requestWithSession(options, function(error, res, body) {

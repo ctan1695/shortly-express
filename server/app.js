@@ -4,6 +4,7 @@ const utils = require('./lib/hashUtils');
 const partials = require('express-partials');
 const bodyParser = require('body-parser');
 const Auth = require('./middleware/auth');
+const cookieParser = require('./middleware/cookieParser');
 const models = require('./models');
 
 const app = express();
@@ -14,7 +15,8 @@ app.use(partials());
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: true }));
 app.use(express.static(path.join(__dirname, '../public')));
-
+app.use(Auth.createSession);
+app.use(cookieParser);
 
 
 app.get('/',
@@ -89,19 +91,19 @@ app.post('/login', (req, res, next) => {
       if (data) {
         if (models.Users.compare(password, data.password, data.salt)) {
           //successful login
-          res.status(200).redirect('/');
+          res.redirect('/');
           //start a session for user
         } else {
-          res.status(400).redirect('/login');
+          res.redirect('/login');
         }
       } else {
-        res.status(500).redirect('/login');
+        res.redirect('/login');
         console.log('Account information not found!');
         //redirect to signup//unsuccessful login
       }
     })
     .error(error => {
-      res.status(500).send(error);
+      res.send(error);
     })
     .catch(data => {
       res.redirect('/login');
@@ -119,20 +121,21 @@ app.post('/signup', (req, res, next) => {
         return res.redirect('/signup');
       } else {
         console.log('data: ', data);
-        return models.Users.create({ username, password });
-        res.status(201).redirect('/');
+        return models.Users.create({ username, password })
+          .then((userData) => {
+            return models.Sessions.update( { hash: req.session.hash }, {userId: userData.insertId});
+          })
+          .then((data) => {
+            req.session.userId = data.insertId;
+            req.session.user = { username: req.body.username };
+            res.redirect('/');
+          });
       }
     })
-    .then(results => {
-      res.redirect('/');
-      next();
-    })
-    // start a session for the user
-    // res.end();
 
     .error(error => {
       if (err.code === 'ER_DUP_ENTRY') {
-        res.status(500).send(error);
+        res.send(error);
       }
     })
     .catch(data => {
