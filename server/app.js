@@ -105,6 +105,18 @@ app.get('/logout', (req, res, next) => {
     });
 });
 
+app.get('/removeAccount', (req, res, next) => {
+  models.Sessions.delete({ hash: req.session.hash })
+    .then(() => {
+      res.cookie('shortlyid', null);
+      req.session.userId = null;
+    })
+    .then(() => {
+      models.Users.delete( {username: req.body.username});
+      console.log('Account Deleted');
+      res.redirect('/');
+    });
+});
 /***********************************************************/
 // Write your authentication routes here
 /************************************************************/
@@ -155,21 +167,27 @@ app.post('/signup', (req, res, next) => {
         console.log('User already exists! Go to Login page.');
         return res.redirect('/login');
       } else {
-        console.log('data: ', data);
-        return models.Users.create({ username, password })
-          .then((userData) => {
-            return models.Sessions.update({ hash: req.session.hash }, { userId: userData.insertId });
-          })
-          .then((data) => {
-            req.session.userId = data.insertId;
-            req.session.user = { username: req.body.username };
-            res.redirect('/');
-          });
+        if (username.length < 3 || password.length < 5) {
+          console.log('Check your input: Username length must exceed 3 characters and password length must exceed 5 characters');
+          throw error;
+        } else {
+          return models.Users.create({ username, password })
+            .then((userData) => {
+              return models.Sessions.update({ hash: req.session.hash }, { userId: userData.insertId });
+            })
+            .then((data) => {
+              req.session.userId = data.insertId;
+              req.session.user = { username: req.body.username };
+              res.redirect('/');
+            });
+        }
       }
     })
 
     .error(error => {
       if (err.code === 'ER_DUP_ENTRY') {
+        res.send(error);
+      } else {
         res.send(error);
       }
     })
