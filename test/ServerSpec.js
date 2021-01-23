@@ -558,7 +558,7 @@ describe('', function() {
       });
     });
 
-    xit('destroys session and cookie when logs out', function(done) {
+    it('destroys session and cookie when logs out', function(done) {
       addUser(function(err, res, body) {
         if (err) { return done(err); }
         var cookies = cookieJar.getCookies('http://127.0.0.1:5500/');
@@ -748,7 +748,7 @@ describe('', function() {
       it('Shortcode redirects to index if shortcode does not exist', function(done) {
         var options = {
           'method': 'GET',
-          'uri': 'http://127.0.0.1:4568/doesNotExist'
+          'uri': 'http://127.0.0.1:5500/doesNotExist'
         };
 
         requestWithSession(options, function(error, res, body) {

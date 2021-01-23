@@ -15,14 +15,28 @@ app.use(partials());
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: true }));
 app.use(express.static(path.join(__dirname, '../public')));
-app.use(Auth.createSession);
 app.use(cookieParser);
+app.use(Auth.createSession);
+
 
 
 app.get('/', Auth.verifySession,
   (req, res) => {
     res.render('index');
   });
+
+
+// app.get('/', (req, res) => {
+//   Auth.verifySession(req, res, next);
+// }, (req, res) => {
+//   res.render('index');
+// });
+
+
+// app.get('/',
+//   (req, res) => {
+//     Auth.verifySession.call(this, req, res, () => res.render('index'));
+//   });
 
 app.get('/create', Auth.verifySession,
   (req, res) => {
@@ -40,7 +54,8 @@ app.get('/links', Auth.verifySession,
       });
   });
 
-app.post('/links', Auth.verifySession,
+//app.post('/links', Auth.verifySession(req, res, next),
+app.post('/links',
   (req, res, next) => {
     var url = req.body.url;
     if (!models.Links.isValidUrl(url)) {
@@ -76,22 +91,42 @@ app.post('/links', Auth.verifySession,
       });
   });
 
-/************************************************************/
+app.get('/login',
+  (req, res) => {
+    res.render('login');
+  });
+
+app.get('/logout', (req, res, next) => {
+  models.Sessions.delete({ hash: req.session.hash })
+    .then(() => {
+      res.cookie('shortlyid', null);
+      req.session.userId = null;
+      res.redirect('/');
+    });
+});
+
+/***********************************************************/
 // Write your authentication routes here
 /************************************************************/
 
 
 app.post('/login', (req, res, next) => {
-  var url = req.body.url;
   var username = req.body.username;
   var password = req.body.password;
-  console.log('url: ', url);
   return models.Users.get({ username: username })
     .then(data => {
       if (data) {
         if (models.Users.compare(password, data.password, data.salt)) {
+          console.log('successful login');
+          return models.Sessions.update({ hash: req.cookies['shortlyid'] }, { userId: data.id })
+            .then((data) => {
+              req.session.userId = data.insertId;
+              req.session.user = { username: req.body.username };
+              console.log('successfully logged in');
+              res.redirect('/');
+
+            });
           //successful login
-          res.redirect('/');
           //start a session for user
         } else {
           res.redirect('/login');
@@ -118,12 +153,12 @@ app.post('/signup', (req, res, next) => {
     .then(data => {
       if (data) {
         console.log('User already exists! Go to Login page.');
-        return res.redirect('/signup');
+        return res.redirect('/login');
       } else {
         console.log('data: ', data);
         return models.Users.create({ username, password })
           .then((userData) => {
-            return models.Sessions.update( { hash: req.session.hash }, {userId: userData.insertId});
+            return models.Sessions.update({ hash: req.session.hash }, { userId: userData.insertId });
           })
           .then((data) => {
             req.session.userId = data.insertId;
@@ -140,10 +175,11 @@ app.post('/signup', (req, res, next) => {
     })
     .catch(data => {
       res.redirect('/signup');
-      res.end();
+      next();
     });
 
 });
+
 
 /************************************************************/
 // Handle the code parameter route last - if all other routes fail

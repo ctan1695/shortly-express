@@ -4,7 +4,6 @@ const Promise = require('bluebird');
 module.exports.createSession = (req, res, next) => {
   //receive request with or without cookie
   if (req.cookies && req.cookies.shortlyid) {
-    console.log(req.cookies);
     var hash = req.cookies.shortlyid;
     return models.Sessions.get({ hash })
       .then((data) => {
@@ -50,7 +49,6 @@ module.exports.createSession = (req, res, next) => {
       })
       .then(() => {
         var username = req.body.username;
-        req.session.user = { username };
         return models.Users.get({ username });
       })
       .then((userData) => {
@@ -73,6 +71,7 @@ module.exports.createSession = (req, res, next) => {
 /************************************************************/
 module.exports.verifySession = (req, res, next) => {
   if (!models.Sessions.isLoggedIn(req.session)) {
+
     res.redirect('/login');
   } else {
     next();
